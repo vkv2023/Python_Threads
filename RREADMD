@@ -1,0 +1,115 @@
+https://realpython.com/python-thread-lock/
+
+
+Concurrency: The ability of a system to handle multiple tasks by allowing their execution
+to overlap in time but not necessarily happen simultaneously.
+
+Parallelism: The simultaneous execution of multiple tasks that run at the same time to leverage
+multiple processing units, typically multiple CPU cores.
+
+
+Thread safety issues occur because of two factors:
+==================================================
+
+Shared mutable data: Threads share the memory of their parent process, so all variables and data
+structures are shared across threads. This can lead to errors when working with shared,
+changeable data.
+
+Non-atomic operations: These occur in a multithreaded environment when operations involving multiple
+steps are interrupted by context switches. This can result in unexpected outcomes if threads are
+switched during the operation.
+
+GIL
+========
+Python’s Global Interpreter Lock (GIL) is a mutex that protects access to Python objects,
+preventing multiple threads from executing Python bytecodes simultaneously.
+The GIL allows only one thread to execute at a single point in time.
+This can lead to performance penalties if you try to use multithreading in CPU-bound programs.
+
+threading.Lock for Primitive Locking
+=====================================
+You can create a Lock object by calling the Lock() constructor from Python’s threading module.
+A Lock object has two states—locked and unlocked. When it’s unlocked, it can be acquired by
+a thread by calling the .acquire() method on Lock.
+The lock is then held by the thread and other threads can’t access it.
+The Lock object is released by calling the .release() method so other threads can acquire it.
+
+Here’s a quick breakdown of these two methods:
+
+.acquire(): When the Lock object state is unlocked, .acquire() changes the Lock object to a locked state and returns immediately.
+
+.release(): When the Lock object state is locked, the .acquire() method calls from other threads will block their execution until the thread holding the lock calls .release() on Lock. It should only be called in the locked state because it changes the state to unlocked and returns immediately. If an attempt is made to release an unlocked lock, a RuntimeError is raised.
+
+When the program enters the with block, the .acquire() method on the Lock is automatically called.
+When the program exits the with block, the .release() method is called.
+
+threading.RLock for Reentrant Locking
+======================================
+If a lock isn’t released properly due to an error or oversight in the code, it can lead to a deadlock,
+where threads wait indefinitely for the lock to be released. The reasons for a deadlock include:
+
+Nested Lock Acquisition: A deadlock can occur if a thread attempts to acquire a lock it already holds.
+In conventional locks, trying to acquire the same lock multiple times within the same thread leads to
+the thread blocking itself, a situation that doesn’t resolve without external intervention.
+
+Multiple Locks Acquisition: A deadlock is likely when multiple locks are used, and threads acquire
+them in inconsistent order. If two threads each hold one lock and are waiting for the other,
+neither thread can proceed, resulting in a deadlock.
+
+bank_deadlock
+==============
+The quick breakdown below explains what’s happening:
+
+1- Thread Worker_0 acquires the lock in the .deposit() method.
+2- The same thread then tries to acquire the lock again in ._update_balance().
+Since the lock is non-reentrant, meaning it can’t be acquired again by the same thread,
+the program deadlocks.
+3- Threads Worker_1 and Worker_2 are waiting to acquire the lock, but they’ll never get it
+because the first thread, Worker_0, is deadlocked.
+4- The lock objects created from threading.Lock are non-reentrant. Once a thread has acquired it,
+that same thread can’t acquire it again without first releasing it.
+The thread hangs indefinitely because ._update_balance() tries to acquire the lock that’s already held
+ by .deposit().
+
+Limiting Access With Semaphores
+===============================
+A semaphore is useful when the number of resources is limited and a number of threads try to access
+these limited resources. It uses a counter to limit access by multiple threads to a critical section.
+The Semaphore() constructor accepts a value argument, which denotes the maximum number of concurrent
+threads acquiring it.
+
+Similar to Lock objects, Semaphore objects have .acquire() and .release() methods and can be used as
+a context manager. Each .acquire() call reduces a semaphores’s counter by one,
+and further .acquire() calls are blocked when the counter reaches zero.
+
+# you may think of an example where multiple customers are waiting in the bank to be served by a
+# limited number of tellers.
+
+Using Synchronization Primitives for Communication and Coordination
+===================================================================
+Earlier, we learned about the synchronization primitives on how to use limit concurrent access to resources.
+In this section, we’ll explore synchronization primitives such as event, condition, and barrier objects,
+which facilitate communication and coordination among multiple threads.
+
+Events for Signaling
+====================
+You can use Event objects for signaling, allowing a thread to notify one or more threads about an action.
+An Event object can be created by instantiating Event from the threading module. Event objects maintain
+an internal flag that starts as False. You can set this flag to True with .set() and reset it to False with .clear().
+Threads can wait for the flag to become True using .wait(), which blocks the thread until the flag is set.
+
+Conditions for Conditional Waiting
+===================================
+A Condition object is built on top of a Lock or RLock object. It supports additional methods that allow
+threads to wait for certain conditions to be met, and to signal other threads that those conditions have
+changed.
+.acquire()
+.release()
+.notify()
+.notify_al()
+.wait()
+
+
+A Barrier object can be used in a banking scenario when you want to accept all customers into a bank only
+after all the bank tellers are ready. In this example, you’ll see that the variable teller_barrier holds a
+Barrier object initialized with three parties:
