@@ -2,7 +2,7 @@ import threading
 from mysql.connector import Error
 import csv
 from urllib3.filepost import writer
-from ThreadSQL.database import conn_pool
+from ThreadSQLExport.database import conn_pool
 
 
 # Function to execute SQL query in a separate thread and process large result sets in chunks
