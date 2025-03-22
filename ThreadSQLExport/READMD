@@ -1,0 +1,9 @@
+This example allows multiple threads to extract and load the data
+
+from the table and write to the csv file.
+
+The program checks the total number of records or max number of customer number,
+
+total number of records = the total number or records / num of threads
+
+each threads writes the records in the same file by taking a lock into this concurrently.
