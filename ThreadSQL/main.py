@@ -38,7 +38,7 @@ def main():
         # writer.writerow(columns)
 
     # Start threads to execute the queries and write the results to CSV
-    threads = []
+    # threads = []
     for i in range(num_threads):
         # this will work for query_count or query_max
         start_id = i * rows_per_thread + 1
